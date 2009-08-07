@@ -1,10 +1,10 @@
 h2. qUnit Spec
-----
 
-h3.example
+h3. example
 
 if there's an object like this:
-<code>
+
+<pre><code>
 var cat = {
   mew: function() {
     log('mew mew');
@@ -13,10 +13,11 @@ var cat = {
     return this.mew();
   }
 };
-</code>
+</code></pre>
 
 and you can write the test with qUnit Spec:
-<cdoe>
+
+<pre><cdoe>
   cat = spec(cat);
   
   expect(up(1));
@@ -32,5 +33,5 @@ and you can write the test with qUnit Spec:
   expect(up(2));
   cat.should_receive('mew').and_return('nyao');
   equals(cat.sings(), 'nyao');
-</code>
+</code></pre>
 
