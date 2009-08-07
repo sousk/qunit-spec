@@ -1,0 +1,36 @@
+h2. qUnit Spec
+----
+
+h3.example
+
+if there's an object like this:
+<code>
+var cat = {
+  mew: function() {
+    log('mew mew');
+  },
+  sings: function() {
+    return this.mew();
+  }
+};
+</code>
+
+and you can write the test with qUnit Spec:
+<cdoe>
+  cat = spec(cat);
+  
+  expect(up(1));
+  cat.should_receive('mew');
+  cat.sings();
+  
+  expect(up(2));
+  cat.should_receive('mew').and_call(function() {
+    return 'nyao nyao';
+  });
+  equals(cat.sings(), 'nyao nyao');
+  
+  expect(up(2));
+  cat.should_receive('mew').and_return('nyao');
+  equals(cat.sings(), 'nyao');
+</code>
+
