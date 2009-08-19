@@ -2,6 +2,7 @@
  * Copyright (c) 2009 sousk.net
  * Dual licensed under the MIT and GPL licenses.
  */
+var log = getLogger();
 
 function __test() {};
 
@@ -33,6 +34,9 @@ function not_empty(expr, msg) {
 
 
 var spec = function(object, config) {
+  //----------------------------------------------------------
+  // privaet members
+  //----------------------------------------------------------
   var set_source_object = function(object) {
     speced._original = object;
     return this;
@@ -46,17 +50,18 @@ var spec = function(object, config) {
   var mocked_response_of = function(sig) {
     return speced._mocked_responses[sig];
   };
-  // var speced_method = function(mother, sig, orig, spec_method) {
-  //   return {
-  //     mother: 
-  //     sig: sig,
-  //     orig: orig,
-  //     
-  //   };
-  // };
+  var create = function(o) {
+    var F = function() {};
+    F.prototype = o;
+    return new F();
+  };
   var verbose = (config && config.verbose) ? log : function() {};
   
-  var speced = $.extend({}, object, {
+  //----------------------------------------------------------
+  // appending method, keep minimum not to override original one
+  //----------------------------------------------------------
+  var speced = create(object);
+  $.extend(speced, {
     _caller: {},
     _mocked_responses: {},
     _interrupted_methods: [],
@@ -68,37 +73,59 @@ var spec = function(object, config) {
       this.receiver._caller[this.sig] = fn;
       return this;
     },
-    should_receive: function(method_name) {
-      var that = this;
-      var sig = method_name; // will support arguments
-      var orig = that[method_name];
+    with_args: function() {
+      return this;
+    },
+    match_signiture: function() {
+      return true;
+    },
+    should_receive: function(method_name, opts) {
+      var self = this;
+      var sig = method_name;
+      var orig = self[method_name];
+      var sig_args = {};
+      if (opts && opts['with']) {
+        
+      }
       
-      that._interrupted_methods.push(method_name);
+      self._interrupted_methods.push(method_name); // record just as for information
       verbose('should_receive: block execution of '+method_name);
-      that[method_name] = function() {
-        var response = that;
-        
-        // count up for expects(n)
-        ok(true, method_name+" called");
-        verbose(method_name+" interrupted by 'should_receive'. fn/args is:", source_object()[method_name], arguments);
-        
-        // execute if taken orver
-        var fn = that._caller[sig];
-        if (fn) {
-          response = fn.apply(source_object(), arguments);
+      
+      // replace method
+      self[method_name] = function() {
+        if (self.match_signiture(method_name, arguments)) {
+          return self.stub(method_name, arguments);
         }
-        
-        var mocked_response = that._mocked_responses[sig];
-        return typeof(mocked_response) == 'undefined' ? response : mocked_response;
+        else {
+          return orig.apply(source_object(), arguments);
+        }
       };
-      // return speced_method(sig, orig, that[method_name]);
       return {
-        receiver: that,
+        receiver: self,
         sig: sig,
         orig: orig,
-        and_return: that.and_return,
-        and_call:   that.and_call
+        with_args:  self.with_args,
+        and_return: self.and_return,
+        and_call:   self.and_call
       };
+    },
+    stub: function(method_name, args) {
+      var response = self = this;
+      var sig = method_name;
+        
+      // count up for expects(n)
+      ok(true, method_name+" called");
+      verbose(method_name+" interrupted by 'should_receive'. fn/args is:", source_object()[method_name], args);
+        
+      // execute if taken orver
+      var fn = self._caller[sig];
+      if (fn) {
+        response = fn.apply(source_object(), args);
+      }
+        
+      var mocked_response = self._mocked_responses[sig];
+      return typeof(mocked_response) == 'undefined' ? response : mocked_response;
+      // return speced_method(sig, orig, self[method_name]);
     }
   });
   set_source_object(object);
