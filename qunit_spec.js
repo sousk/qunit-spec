@@ -2,7 +2,20 @@
  * Copyright (c) 2009 sousk.net
  * Dual licensed under the MIT and GPL licenses.
  */
-var log = getLogger();
+if (!window.log) {
+ window.log = window.getLogger ? window.getLogger() : (function() {
+     if (typeof(window) != "undefined" && window.console 
+       && window.console.log) {
+         // Safari and FireBug 0.4
+         // Percent replacement is a workaround for cute Safari crashing bug
+         // window.console.log(msg.replace(/%/g, '\uFF05'));
+         return window.console.log;
+     }
+     else {
+       return function() {};
+     }
+   })();
+}
 
 function __test() {};
 
